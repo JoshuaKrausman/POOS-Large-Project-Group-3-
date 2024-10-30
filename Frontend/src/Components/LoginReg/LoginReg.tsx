@@ -19,6 +19,7 @@ function LoginReg()
   // }
 
   const [state, setState] = useState("Welcome");
+  const [message, setMessage] = useState('');
   const [displayName, setDisplayName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [username, setUserame] = React.useState('');
@@ -60,6 +61,41 @@ function LoginReg()
         return;
     } 
 
+  };
+
+  async function doLogin(event: any) : Promise<void>
+  {
+    event.preventDefault();
+    var obj = {username:username,password:password};
+    var js = JSON.stringify(obj);
+
+    try
+    {    
+        const response = await fetch('http://localhost:5000/api/login',
+            {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
+
+        var res = JSON.parse(await response.text());
+
+        if( res.id <= 0 )
+        {
+            setMessage('User/Password incorrect');
+        }
+        else
+        {
+            var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
+            localStorage.setItem('user_data', JSON.stringify(user));
+
+            setMessage('Login successful');
+            // window.location.href = '/cards';
+        }
+    }
+    catch(error:any)
+    {
+        alert(error.toString());
+        return;
+    }
+
+    
   };
 
   function handleSetRegDisplayName( e: any ) : void
@@ -104,7 +140,8 @@ function LoginReg()
         <div className="LorR" onClick={() => setState("Register")}>New User?</div>
       </div>}
 
-        {state === "Welcome"?<div className="submit">Login</div>:<div className="submit" onClick={doRegister}>Register</div>}
+        {state === "Welcome"?<div className="submit" onClick={doLogin}>Login</div>:<div className="submit" onClick={doRegister}>Register</div>}
+        <div>{message}</div>
     </div>
   )
 };
