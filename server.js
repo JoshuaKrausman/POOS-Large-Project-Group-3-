@@ -33,9 +33,16 @@ app.post('/api/register', async (req, res, next) =>
     let id = '';
     let un = '';
     let error = '';
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
     try
     {
+        if (!emailPattern.test(email))
+        {
+            error = 'Invalid email format';
+            return res.status(400).json({ id, Username: un, error });
+        }
+
         await client.connect();
         const db = client.db('POOSD-Large-Project');
 
@@ -49,13 +56,13 @@ app.post('/api/register', async (req, res, next) =>
 
         // Create a new user
         const newUser =
-            {
-                Username : username,
-                Password: password,
-                Email: email,
-                Verified: false,
-                DisplayName: displayName,
-            };
+        {
+            Username : username,
+            Password: password,
+            Email: email,
+            Verified: false,
+            DisplayName: displayName,
+        };
 
         // Save user to database
         await db.collection('User').insertOne(newUser);
