@@ -310,3 +310,135 @@ app.post('/api/deleteCardSet', async (req, res) =>
       await client.close();
     }
 });
+
+app.delete('/api/deleteUser', async (req, res) => {
+    const { userId } = req.body;
+
+    try {
+        if (!userId) {
+            return errorResponse(res, 400, 'User ID is required');
+        }
+
+        const { client, db } = await getDb();
+
+        try {
+            const session = client.startSession();
+            await session.withTransaction(async () => {
+                const userObjectId = new ObjectId(userId);
+
+                // Delete all card sets owned by the user
+                const cardSets = await db.collection('CardSet')
+                    .find({ UserId: userObjectId }, { session })
+                    .toArray();
+
+                // Delete all cards from the user's card sets
+                for (const cardSet of cardSets) {
+                    await db.collection('Cards').deleteMany(
+                        { SetID: cardSet._id },
+                        { session }
+                    );
+                }
+
+                // Delete all card sets
+                await db.collection('CardSet').deleteMany(
+                    { UserId: userObjectId },
+                    { session }
+                );
+
+                // Delete the user
+                const { deletedCount } = await db.collection('User').deleteOne(
+                    { _id: userObjectId },
+                    { session }
+                );
+
+                if (deletedCount === 0) {
+                    throw new Error('User not found');
+                }
+
+                res.status(200).json({
+                    success: true,
+                    message: 'User and all associated data deleted successfully'
+                });
+            });
+        } finally {
+            await client.close();
+        }
+    } catch (err) {
+        console.error('Error deleting user:', err);
+        if (err.message === 'User not found') {
+            errorResponse(res, 404, 'User not found');
+        } else {
+            errorResponse(res, 500, 'Failed to delete user');
+        }
+    }
+});
+
+app.post('/api/getUserSets', async (req, res) => {
+    const { userId } = req.body;
+
+    try {
+        if (!userId) {
+            return errorResponse(res, 400, 'User ID is required');
+        }
+
+        const { client, db } = await getDb();
+
+        try {
+            const userObjectId = new ObjectId(userId);
+            
+            // Adds pagination support
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 10;
+            const skip = (page - 1) * limit;
+
+            // Gets total count for pagination
+            const totalSets = await db.collection('CardSet')
+                .countDocuments({ UserId: userObjectId });
+
+            // Gets sets with pagination
+            const sets = await db.collection('CardSet')
+                .find({ UserId: userObjectId })
+                .sort({ CreatedAt: -1 }) 
+                .skip(skip)
+                .limit(limit)
+                .project({
+                    Name: 1,
+                    Topic: 1,
+                    Published: 1,
+                    CreatedAt: 1,
+                    UpdatedAt: 1
+                })
+                .toArray();
+
+            if (sets.length === 0 && page === 1) {
+                return res.status(200).json({
+                    success: true,
+                    message: 'No sets found for this user',
+                    data: [],
+                    pagination: {
+                        currentPage: page,
+                        totalPages: 0,
+                        totalSets: 0,
+                        hasMore: false
+                    }
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                data: sets,
+                pagination: {
+                    currentPage: page,
+                    totalPages: Math.ceil(totalSets / limit),
+                    totalSets,
+                    hasMore: skip + sets.length < totalSets
+                }
+            });
+        } finally {
+            await client.close();
+        }
+    } catch (err) {
+        console.error('Error fetching user sets:', err);
+        errorResponse(res, 500, 'Failed to fetch user sets');
+    }
+});
