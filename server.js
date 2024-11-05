@@ -376,69 +376,25 @@ app.delete('/api/deleteUser', async (req, res) => {
 app.post('/api/getUserSets', async (req, res) => {
     const { userId } = req.body;
 
+    if (!userId) {
+        console.error("User ID is missing in request body.");
+        return errorResponse(res, 400, 'User ID is required');
+    }
+
     try {
-        if (!userId) {
-            return errorResponse(res, 400, 'User ID is required');
+        const userIdInt = parseInt(userId);
+        console.log("Looking up sets for user with UserID:", userIdInt);
+        const userSets = await db.collection('CardSet').find({ UserID: userIdInt }).toArray();
+
+        // Check if any sets were retrieved
+        if (!userSets || userSets.length === 0) {
+            console.error("No sets found for the given UserID.");
+            return errorResponse(res, 404, 'No sets found for this user');
         }
 
-        const { client, db } = await getDb();
-
-        try {
-            const userObjectId = new ObjectId(userId);
-            
-            // Adds pagination support
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 10;
-            const skip = (page - 1) * limit;
-
-            // Gets total count for pagination
-            const totalSets = await db.collection('CardSet')
-                .countDocuments({ UserId: userObjectId });
-
-            // Gets sets with pagination
-            const sets = await db.collection('CardSet')
-                .find({ UserId: userObjectId })
-                .sort({ CreatedAt: -1 }) 
-                .skip(skip)
-                .limit(limit)
-                .project({
-                    Name: 1,
-                    Topic: 1,
-                    Published: 1,
-                    CreatedAt: 1,
-                    UpdatedAt: 1
-                })
-                .toArray();
-
-            if (sets.length === 0 && page === 1) {
-                return res.status(200).json({
-                    success: true,
-                    message: 'No sets found for this user',
-                    data: [],
-                    pagination: {
-                        currentPage: page,
-                        totalPages: 0,
-                        totalSets: 0,
-                        hasMore: false
-                    }
-                });
-            }
-
-            res.status(200).json({
-                success: true,
-                data: sets,
-                pagination: {
-                    currentPage: page,
-                    totalPages: Math.ceil(totalSets / limit),
-                    totalSets,
-                    hasMore: skip + sets.length < totalSets
-                }
-            });
-        } finally {
-            await client.close();
-        }
-    } catch (err) {
-        console.error('Error fetching user sets:', err);
+        res.status(200).json({ success: true, sets: userSets });
+    } catch (error) {
+        console.error("Error retrieving user sets:", error);
         errorResponse(res, 500, 'Failed to fetch user sets');
     }
 });
