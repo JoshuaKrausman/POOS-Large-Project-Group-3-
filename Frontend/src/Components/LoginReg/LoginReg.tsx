@@ -5,7 +5,7 @@ import back_icon from '../Assets/back.png'
 
 function LoginReg() 
 {
-  // const app_name = 'cop4331-3.com'
+  // const app_name = 'cop4331-project.online'
   // function buildPath(route:string) : string
   // {
   //     if (process.env.NODE_ENV != 'development') 
