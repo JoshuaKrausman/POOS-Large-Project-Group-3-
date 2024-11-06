@@ -319,61 +319,25 @@ app.delete('/api/deleteUser', async (req, res) => {
     const { userId } = req.body;
 
     try {
-        if (!userId) {
-            return errorResponse(res, 400, 'User ID is required');
-        }
+        const userObjectId = new ObjectId(userId);
 
-        const { client, db } = await getDb();
+        // Start a MongoDB session
+        const session = await client.startSession();
 
-        try {
-            const session = client.startSession();
-            await session.withTransaction(async () => {
-                const userObjectId = new ObjectId(userId);
+        // Begin transaction
+        await session.withTransaction(async () => {
+            // Delete all card sets owned by the user
+            await db.collection('CardSet').deleteMany({ UserId: userObjectId }, { session });
 
-                // Delete all card sets owned by the user
-                const cardSets = await db.collection('CardSet')
-                    .find({ UserId: userObjectId }, { session })
-                    .toArray();
+            // Delete the user from the User collection
+            await db.collection('User').deleteOne({ _id: userObjectId }, { session });
+        });
 
-                // Delete all cards from the user's card sets
-                for (const cardSet of cardSets) {
-                    await db.collection('Cards').deleteMany(
-                        { SetID: cardSet._id },
-                        { session }
-                    );
-                }
+        // Return success response
+        res.status(200).json({ success: true });
 
-                // Delete all card sets
-                await db.collection('CardSet').deleteMany(
-                    { UserId: userObjectId },
-                    { session }
-                );
-
-                // Delete the user
-                const { deletedCount } = await db.collection('User').deleteOne(
-                    { _id: userObjectId },
-                    { session }
-                );
-
-                if (deletedCount === 0) {
-                    throw new Error('User not found');
-                }
-
-                res.status(200).json({
-                    success: true,
-                    message: 'User and all associated data deleted successfully'
-                });
-            });
-        } finally {
-            await client.close();
-        }
-    } catch (err) {
-        console.error('Error deleting user:', err);
-        if (err.message === 'User not found') {
-            errorResponse(res, 404, 'User not found');
-        } else {
-            errorResponse(res, 500, 'Failed to delete user');
-        }
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Failed to delete user" });
     }
 });
 
