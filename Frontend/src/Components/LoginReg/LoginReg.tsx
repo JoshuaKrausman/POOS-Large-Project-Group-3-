@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import './LoginReg.css'
 import back_icon from '../Assets/back.png'
 
@@ -19,11 +19,11 @@ function LoginReg()
   // }
 
   const [state, setState] = useState("Welcome");
-  const [message, setMessage] = useState('');
-  const [displayName, setDisplayName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [username, setUserame] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [message, setMessage] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [username, setUserame] = useState("");
+  const [password, setPassword] = useState("");
 
   async function doRegister(event: any) : Promise<void>
   {
@@ -50,10 +50,9 @@ function LoginReg()
         {
             var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
             localStorage.setItem('user_data', JSON.stringify(user));
-            setDisplayName('');
-            setEmail('');
-            setUserame('');
-            setPassword('');
+
+
+
             console.log("Reg Sucessful");
             setState("Welcome");
         }
@@ -88,8 +87,8 @@ function LoginReg()
             var user = {username:res.Username, id:res.id, displayName:res.DisplayName, email:res.Email}
             localStorage.setItem('user_data', JSON.stringify(user));
             // Clear the input fields after successful login
-            setUserame('');
-            setPassword('');
+            setUserame("");
+            setPassword("");
             setMessage('Login successful');
             window.location.href = '/menu';
         }
@@ -128,14 +127,14 @@ function LoginReg()
         <div className="header">{state}</div>
         {state === "Welcome"?<div></div>:<div className="backArrow"><img src={back_icon} alt='' onClick={() => setState("Welcome")}/></div>}
       <div className="inputs">
-      {state === "Welcome"?<div></div>:<div className="input"><input type="text" id='displayName' onChange={handleSetRegDisplayName} placeholder='Name'/></div>}
-      {state === "Welcome"?<div></div>:<div className="input"><input type="text" id='email' onChange={handleSetRegEmail} placeholder='Email'/></div>}
+      {state === "Welcome"?<div></div>:<div className="input"><input type="text" id='displayName' onChange={handleSetRegDisplayName} placeholder='Name' autoComplete='off'/></div>}
+      {state === "Welcome"?<div></div>:<div className="input"><input type="text" id='email' onChange={handleSetRegEmail} placeholder='Email' autoComplete='off'/></div>}
 
         <div className="input">
-          <input type="text" id='username' onChange={handleSetRegUsername} placeholder='Username' autoComplete='off'/>
+          <input type="text" id='username' value={username} onChange={handleSetRegUsername} placeholder='Username' autoComplete='new-Username'/>
         </div>
         <div className="input">
-          <input type="password" id='password' onChange={handleSetRegPassword} placeholder='Password' autoComplete='off'/>
+          <input type="password" id='password' value={password} onChange={handleSetRegPassword}  placeholder='Password' autoComplete='new-Password'/>
         </div>
       </div>
       {state === "Register"?<div></div>:<div className="forgotxLorR">
@@ -144,7 +143,7 @@ function LoginReg()
       </div>}
 
         {state === "Welcome"?<div className="submit" onClick={doLogin}>Login</div>:<div className="submit" onClick={doRegister}>Register</div>}
-        <div>{message}</div>
+        <div id="resultText">{message}</div>
     </div>
   )
 };

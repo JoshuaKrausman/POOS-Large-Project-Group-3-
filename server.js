@@ -309,9 +309,6 @@ app.post('/api/deleteCardSet', async (req, res) =>
     {
       console.error("Error deleting card set:", error);
       res.status(500).json({ success: false, error: "Failed to delete card set" });
-    } finally 
-    {
-      await client.close();
     }
 });
 

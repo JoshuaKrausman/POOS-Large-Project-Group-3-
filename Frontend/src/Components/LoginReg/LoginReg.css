@@ -35,6 +35,12 @@
     width: 40px;
     height: 40px;
     cursor: pointer;
+    transition: 0.2s;
+}
+
+.backArrow img:hover
+{
+    transform: scale(1.1);
 }
 
 .inputs
@@ -43,7 +49,7 @@
     margin-bottom: 10px;
     display: flex;
     flex-direction: column;
-    gap:10px
+    gap:10px;
 }
 
 .input input
@@ -53,10 +59,12 @@
     border-radius: 50px;
     border: none;
     outline: none;
+    transition: 0.2s;
 }
 
 .input input:focus
 {
+    transform: scale(1.05);
     box-shadow: 0px 0px 8px black;
 }
 
@@ -102,9 +110,17 @@
     font-size: 25px;
     padding:3px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 .submit:hover
 {
+    transform: scale(1.1);
     box-shadow: 0px 0px 8px black;
+}
+
+#resultText
+{
+    margin-top: 7px;
+    color: white;
 }

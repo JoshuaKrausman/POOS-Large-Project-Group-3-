@@ -1,6 +1,8 @@
 import React from 'react'
 import { useState, useEffect } from 'react'
 import './MainMenu.css'
+import x_icon from '../Assets/x.png'
+import pen_icon from '../Assets/edit.png'
 
 function MainMenu()
 {
@@ -9,6 +11,12 @@ function MainMenu()
     const [state, setState] = useState('normal');
     const [newName, setNewName] = useState('');
     const [newTopic, setNewTopic] = useState('');
+    const [editState, setEditState] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editTopic, setEditTopic] = useState('');
+    const [isFadingOut, setIsFadingOut] = useState(false);
+    const [userSets, setUserSets] = useState<any[]>([]);  // New state to store user sets
+
 
     async function showSets(): Promise<void> {
         // Check if userObj is valid
@@ -49,28 +57,62 @@ function MainMenu()
             return;
           }
       
-          let userSets = res.sets;
-        //   console.log("The amount of card sets " + userObj.displayName + " has is: " + userSets.length);
+          setUserSets(res.sets);
           console.log(userSets);
-      
-          let collection = "";
-          for (let i = 0; i < userSets.length; i++) 
-            {
-                collection += (`<div class="cardSet" id="set` + (i+1) +`">` + userSets[i].Name + '</br><span id="topic">' + userSets[i].Topic + `</span></div>`);
-                if (i !== userSets.length) collection += "\n";
-            }
-          console.log(collection);
-      
-          const element = document.querySelector(".listCardSets");
-          if (element)
-            element.innerHTML = collection;
-          else 
-            console.error("Element with class 'listCardSets' not found");
-      
-        } catch (error: any) {
+
+        } 
+        catch (error: any) 
+        {
           alert(error.toString());
         }
       }
+
+    async function deleteCardSet(id: string) 
+    {
+      let obj = {id : id};
+      let js = JSON.stringify(obj);
+      try
+        {
+            const response = await fetch('http://localhost:5000/api/deleteCardSet', {
+              method: 'POST',
+              body: js,
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+          const resText = await response.text();
+          if (!resText) {
+            console.error("Empty response received from the server");
+            return;
+          }
+          console.log("Card ID:" + id + " deleted");
+          showSets();
+        }
+        catch (error:any)
+        {
+          alert(error.toString());
+        }
+    };
+
+
+    async function editCardSet(id:string, index:number)
+    {
+      console.log("Editing Card ID: " + id);
+      console.log("Array ID: " + index)
+      console.log("New Name: " + editName);
+      console.log("New Topics: " + editTopic);
+      // setEditState(true);
+      let obj = {id : id, Name : editName, Topic : editTopic};
+      let js = JSON.stringify(obj);
+    }
+
+    async function openSet(id : string)
+    {
+      console.log("Opening Set: " + id);
+      localStorage.setItem('card_id', id);
+      window.location.href = '/card'
+    }
+
+
 
     function doLogout(event:any) : void
     {
@@ -123,8 +165,16 @@ function MainMenu()
 
     function addCardWrapper() : void
     {
-        setState("adding");
+      if (state === "adding") {
+        setIsFadingOut(true); 
+        setTimeout(() => {
+            setState("normal"); 
+            setIsFadingOut(false); 
+        }, 150); 
+    } else {
+        setState("adding"); 
     }
+  }
 
     function handleNewName(event:any) : void
     {
@@ -137,7 +187,12 @@ function MainMenu()
     }
 
 
-    showSets();
+
+    useEffect(() => {
+      // Call showSets once when the component mounts
+      showSets();
+    }, []);
+    
   return (
     <div>
         <div className="blurredBackground"></div>
@@ -146,12 +201,42 @@ function MainMenu()
         <div><h1>Welcome {userObj.displayName}</h1></div>
         <div><h2>Here are your sets</h2></div>
         {state === "normal"?<div></div>:
-        <div className="cardSet" id="set0">
+        <div className={`cardSet ${isFadingOut ? "fadeOut" : ""}`} id="set0">
             <input type="text" id='setName' placeholder="Set Name"onChange={handleNewName}></input>
             <input type="text" id='setTopic' placeholder="Set Topic"onChange={handleNewTopic}></input>
             <div className='makeSet'onClick={addCardSet}>Add</div>
         </div>}
-        <div className="listCardSets"></div>
+        <div className="listCardSets">
+        {userSets.map((set, index) => (
+          <div key={index} className="cardSet" onClick={() => openSet(set._id)} id={`set${index + 1}`}>
+            <div className="nameTopic">
+              {set.Name}
+              <br />
+              <span id="topic">{set.Topic}</span>
+            </div>
+            <div className="editDelete">
+              <img
+                src={pen_icon}
+                onClick={(e) => { 
+                  e.stopPropagation(); // Prevent the card set from being opened when clicking edit
+                  editCardSet(set._id, index + 1);
+                }}
+                alt="Edit icon"
+                id="editCardButton"
+              />
+              <img
+                src={x_icon}
+                onClick={(e) => { 
+                  e.stopPropagation(); // Prevent the card set from being opened when clicking delete
+                  deleteCardSet(set._id);
+                }}
+                alt="Delete icon"
+                id="delCardButton"
+              />
+            </div>
+          </div>
+        ))}
+        </div>
     </div>
   )
 }
