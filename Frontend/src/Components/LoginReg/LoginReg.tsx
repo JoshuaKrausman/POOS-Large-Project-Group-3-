@@ -50,9 +50,12 @@ function LoginReg()
         {
             var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
             localStorage.setItem('user_data', JSON.stringify(user));
-
+            setDisplayName('');
+            setEmail('');
+            setUserame('');
+            setPassword('');
             console.log("Reg Sucessful");
-            // window.location.href = '/cards';
+            setState("Welcome");
         }
     }
     catch(error:any)
@@ -82,11 +85,13 @@ function LoginReg()
         }
         else
         {
-            var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
+            var user = {username:res.Username, id:res.id, displayName:res.DisplayName, email:res.Email}
             localStorage.setItem('user_data', JSON.stringify(user));
-
+            // Clear the input fields after successful login
+            setUserame('');
+            setPassword('');
             setMessage('Login successful');
-            // window.location.href = '/cards';
+            window.location.href = '/menu';
         }
     }
     catch(error:any)
@@ -118,8 +123,6 @@ function LoginReg()
     setPassword( e.target.value );
   }
 
-
-
   return (
     <div className='container'>
         <div className="header">{state}</div>
@@ -129,10 +132,10 @@ function LoginReg()
       {state === "Welcome"?<div></div>:<div className="input"><input type="text" id='email' onChange={handleSetRegEmail} placeholder='Email'/></div>}
 
         <div className="input">
-          <input type="text" id='username' onChange={handleSetRegUsername} placeholder='Username'/>
+          <input type="text" id='username' onChange={handleSetRegUsername} placeholder='Username' autoComplete='off'/>
         </div>
         <div className="input">
-          <input type="password" id='password' onChange={handleSetRegPassword} placeholder='Password'/>
+          <input type="password" id='password' onChange={handleSetRegPassword} placeholder='Password' autoComplete='off'/>
         </div>
       </div>
       {state === "Register"?<div></div>:<div className="forgotxLorR">

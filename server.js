@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
+const { ObjectId } = require('mongodb');
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use((req, res, next) => {
 });
 
 app.listen(5000); // start Node + Express server on port 5000
+
 
 app.post('/api/register', async (req, res, next) =>
 {
@@ -90,26 +92,30 @@ app.post('/api/login', async (req, res, next) =>
 // outgoing: id, firstName, lastName, error
     let id = '';
     let un = '';
+    let dn = '';
+    let em = '';
     let error = '';
     const {username, password} = req.body;
     try {
         await client.connect();
         const db = client.db('POOSD-Large-Project');
 
-        const user = await db.collection('User').find({Username: username, Password: password}).toArray();
+        const user = await db.collection('User').find({Username: username, Password: password,}).toArray();
         if (user.length > 0) {
             id = user[0]._id.toString();
             un = user[0].Username;
-            res.status(200).json({ id, Username: un, error: '' });
+            dn = user[0].DisplayName;
+            em = user[0].Email;
+            res.status(200).json({ id : id, Username: un, DisplayName : dn, Email : em, error: '' });
         } else {
             error = 'Invalid username or password';
-            res.status(400).json({ id, Username: un, error });
+            res.status(400).json({ id: id, Username: un, DisplayName : dn, Email : em, error });
         }
     } catch (err)
     {
         console.error(err);
         error = 'An error has occurred\nUnable to login';
-        res.status(500).json({ id, Username: un, error });
+        res.status(500).json({ id : id, Username: un, DisplayName : dn, Email : em, error });
     }
 });
 
@@ -184,7 +190,7 @@ app.post('/api/createCardSet', async (req, res) =>
       {
           Name,
           SetID, 
-          UserId : userId,
+          UserID : userId,
           Topic,
           Published
       };
@@ -196,9 +202,7 @@ app.post('/api/createCardSet', async (req, res) =>
   } catch (error) {
       console.error("Error creating card set:", error);
       res.status(500).json({ success: false, error: "Failed to create card set" });
-  } finally {
-      await client.close();
-  }
+  } 
 });
 
 app.post('/api/updateCardSet', async (req, res) =>
@@ -373,28 +377,66 @@ app.delete('/api/deleteUser', async (req, res) => {
     }
 });
 
+// app.post('/api/getUserSets', async (req, res) => {
+//     const { userId } = req.body;
+//     console.log("Recieved UserID:", userId);
+
+//     const db = client.db("POOSD-Large-Project");
+
+//     if (!userId) {
+//         console.error("User ID is missing in request body.");
+//         return res.status(400).json({ success: false, message: 'User ID is required' });
+//     }
+
+//     try {
+//         const userObjectId = new ObjectId(userId);
+
+//         // Query for documents with the given UserID ObjectId
+//         const userSets = await db.collection('CardSet').find({ UserID: userObjectId }).toArray();
+
+//         if (!userSets || userSets.length === 0) {
+//             console.error("No sets found for the given UserID.");
+//             return res.status(200).json({ success: false, sets: userSets });
+//         }
+
+//         res.status(200).json({ success: true, sets: userSets });
+//     } catch (error) {
+//         console.error("Error retrieving user sets:", error);
+//         res.status(500).json({ success: false, message: 'Failed to fetch user sets' });
+//     }
+// });
+
 app.post('/api/getUserSets', async (req, res) => {
     const { userId } = req.body;
-
+    // console.log("Received UserID:", userId);
+  
     if (!userId) {
-        console.error("User ID is missing in request body.");
-        return errorResponse(res, 400, 'User ID is required');
+      console.error("User ID is missing in request body.");
+      return res.status(400).json({ success: false, message: 'User ID is required', sets: [] });
     }
-
+  
     try {
-        const userIdInt = parseInt(userId);
-        console.log("Looking up sets for user with UserID:", userIdInt);
-        const userSets = await db.collection('CardSet').find({ UserID: userIdInt }).toArray();
-
-        // Check if any sets were retrieved
-        if (!userSets || userSets.length === 0) {
-            console.error("No sets found for the given UserID.");
-            return errorResponse(res, 404, 'No sets found for this user');
-        }
-
-        res.status(200).json({ success: true, sets: userSets });
+      // Check if MongoDB client is connected
+      if (!client.topology || !client.topology.isConnected()) {
+        console.error("MongoDB client is not connected.");
+        return res.status(500).json({ success: false, message: 'Database not connected' });
+      }
+  
+      const db = client.db("POOSD-Large-Project");
+      const userObjectId = new ObjectId(userId);
+  
+      // Query for documents with the given UserID ObjectId
+      const userSets = await db.collection('CardSet').find({ UserID: userObjectId }).toArray();
+  
+      if (!userSets || userSets.length === 0) {
+        console.error("No sets found for the given UserID.");
+        return res.status(200).json({ success: false, sets: [] });
+      }
+  
+      res.status(200).json({ success: true, sets: userSets });
     } catch (error) {
-        console.error("Error retrieving user sets:", error);
-        errorResponse(res, 500, 'Failed to fetch user sets');
+      console.error("Error retrieving user sets:", error);
+      res.status(500).json({ success: false, message: 'Failed to fetch user sets', sets: [] });
     }
-});
+  });
+
