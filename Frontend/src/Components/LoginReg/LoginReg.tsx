@@ -5,18 +5,18 @@ import back_icon from '../Assets/back.png'
 
 function LoginReg() 
 {
-  // const app_name = 'cop4331-project.online'
-  // function buildPath(route:string) : string
-  // {
-  //     if (process.env.NODE_ENV != 'development') 
-  //     {
-  //         return 'http://' + app_name +  ':5000/' + route;
-  //     }
-  //     else
-  //     {        
-  //         return 'http://localhost:5000/' + route;
-  //     }
-  // }
+  const app_name = 'cop4331-project.online'
+  function buildPath(route:string) : string
+  {
+      if (process.env.NODE_ENV != 'development') 
+      {
+          return 'http://' + app_name +  ':5000/' + route;
+      }
+      else
+      {        
+          return 'http://localhost:5000/' + route;
+      }
+  }
 
   const [state, setState] = useState("Welcome");
   const [message, setMessage] = useState("");
@@ -37,7 +37,7 @@ function LoginReg()
 
     try
     {    
-        const response = await fetch('http://localhost:5000/api/register',
+        const response = await fetch(buildPath('api/register'),
             {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
 
         var res = JSON.parse(await response.text());
@@ -73,7 +73,7 @@ function LoginReg()
 
     try
     {    
-        const response = await fetch('http://localhost:5000/api/login',
+        const response = await fetch(buildPath('api/login'),
             {method:'POST',body:js,headers:{'Content-Type': 'application/json'}});
 
         var res = JSON.parse(await response.text());

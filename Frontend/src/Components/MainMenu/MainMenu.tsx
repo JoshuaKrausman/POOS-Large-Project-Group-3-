@@ -17,7 +17,18 @@ function MainMenu()
     const [isFadingOut, setIsFadingOut] = useState(false);
     const [userSets, setUserSets] = useState<any[]>([]);  // New state to store user sets
 
-
+    const app_name = 'cop4331-project.online'
+    function buildPath(route:string) : string
+    {
+        if (process.env.NODE_ENV != 'development') 
+        {
+            return 'http://' + app_name +  ':5000/' + route;
+        }
+        else
+        {        
+            return 'http://localhost:5000/' + route;
+        }
+    }
     async function showSets(): Promise<void> {
         // Check if userObj is valid
         if (!userObj || !userObj.id) {
@@ -30,7 +41,7 @@ function MainMenu()
         let js = JSON.stringify(obj);
       
         try {
-          const response = await fetch('http://localhost:5000/api/getUserSets', {
+          const response = await fetch(buildPath('api/getUserSets'), {
             method: 'POST',
             body: js,
             headers: { 'Content-Type': 'application/json' },
@@ -73,7 +84,7 @@ function MainMenu()
       let js = JSON.stringify(obj);
       try
         {
-            const response = await fetch('http://localhost:5000/api/deleteCardSet', {
+            const response = await fetch(buildPath('api/deleteCardSet'), {
               method: 'POST',
               body: js,
               headers: { 'Content-Type': 'application/json' },
@@ -129,7 +140,7 @@ function MainMenu()
         let js = JSON.stringify(obj);
         try
         {
-            const response = await fetch('http://localhost:5000/api/createCardSet', {
+            const response = await fetch(buildPath('api/createCardSet'), {
                 method: 'POST',
                 body: js,
                 headers: { 'Content-Type': 'application/json' },
