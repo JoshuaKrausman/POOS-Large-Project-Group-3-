@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState, useEffect } from 'react'
+// import { useState, useEffect } from 'react'
 import './CardSet.css'
 import arrow_icon from '../Assets/arrow.png'
 

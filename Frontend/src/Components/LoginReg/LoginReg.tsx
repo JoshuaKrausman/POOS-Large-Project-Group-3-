@@ -1,5 +1,4 @@
-import React from 'react'
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import './LoginReg.css'
 import back_icon from '../Assets/back.png'
 

@@ -1,4 +1,3 @@
-import React from 'react'
 import { useState, useEffect } from 'react'
 import './MainMenu.css'
 import x_icon from '../Assets/x.png'
@@ -11,9 +10,9 @@ function MainMenu()
     const [state, setState] = useState('normal');
     const [newName, setNewName] = useState('');
     const [newTopic, setNewTopic] = useState('');
-    const [editState, setEditState] = useState(false);
-    const [editName, setEditName] = useState('');
-    const [editTopic, setEditTopic] = useState('');
+    // const [editState, setEditState] = useState(false);
+    // const [editName, setEditName] = useState('');
+    // const [editTopic, setEditTopic] = useState('');
     const [isFadingOut, setIsFadingOut] = useState(false);
     const [userSets, setUserSets] = useState<any[]>([]);  // New state to store user sets
 
@@ -54,13 +53,8 @@ function MainMenu()
             return;
           }
       
-          let res;
-          try {
-            res = JSON.parse(resText);
-          } catch (error) {
-            console.error("Error parsing response:", error);
-            return;
-          }
+          let res = JSON.parse(resText);
+   
       
           // Check if res.sets exists and is an array
           if (!res.sets || !Array.isArray(res.sets)) {
@@ -109,11 +103,11 @@ function MainMenu()
     {
       console.log("Editing Card ID: " + id);
       console.log("Array ID: " + index)
-      console.log("New Name: " + editName);
-      console.log("New Topics: " + editTopic);
-      // setEditState(true);
-      let obj = {id : id, Name : editName, Topic : editTopic};
-      let js = JSON.stringify(obj);
+      // console.log("New Name: " + editName);
+      // console.log("New Topics: " + editTopic);
+      // // setEditState(true);
+      // let obj = {id : id, Name : editName, Topic : editTopic};
+      // let js = JSON.stringify(obj);
     }
 
     async function openSet(id : string)
@@ -152,17 +146,7 @@ function MainMenu()
             console.error("Empty response received from the server");
             return;
           }
-      
-          let res;
-          try 
-          {
-            res = JSON.parse(resText);
-          } 
-          catch (error) 
-          {
-            console.error("Error parsing response:", error);
-            return;
-          }
+          
 
           console.log("Added")
           setState("normal");
