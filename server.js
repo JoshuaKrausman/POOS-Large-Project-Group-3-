@@ -272,7 +272,6 @@ app.post('/api/deleteCardSet', async (req, res) =>
 
   var ObjectId = require('mongodb').ObjectId;
   _id = new ObjectId(id);
-
   try 
   {
     await client.connect();
@@ -401,3 +400,103 @@ app.post('/api/getUserSets', async (req, res) => {
     }
   });
 
+app.post('/api/getCard', async (req, res, next) => 
+{
+    // incoming: id (setID)
+    // outgoing: results[], error
+    var error = '';
+
+    const {id} = req.body; // Default to empty strings if not provided
+    
+    if (!id) 
+    {
+        return res.status(400).json({ success: false, error: "CardSet ID is required" });
+    }   
+
+    try 
+    { 
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+        var setObjectID
+        var ObjectId = require('mongodb').ObjectId;
+        try {
+             setObjectID = new ObjectId(id);
+        }
+        catch (error) {
+            return res.status(400).json({ success: false, error: "Invalid CardSet ID format" });
+        }
+       
+        const cards = await db.collection('Cards').find({SetID : setObjectID}).sort({_id: 1}).toArray();
+    
+    const _ret = cards.map(card => (
+    {
+        Term: card.Term,
+        Definition: card.Definition,
+        _id: card._id.toString()
+    }));
+    const ret = { results: _ret, error: error };
+    res.status(200).json(ret);
+    
+    } catch (err) 
+    {
+        console.error("Error retrieving data:", err);
+        res.status(500).json({ results: [], error: "Server Error" })
+    }
+
+});                         
+
+app.post('/api/createCard', async (req, res) => 
+{
+    // incoming: Term, Definition, setID
+    // outgoing: results[], error
+
+    const { Term, Definition, setID } = req.body; // Expecting Term, Definition, and CardId as input
+
+    // Validate the required fields
+    if (!Term || !Definition || !setID) 
+    {
+        return res.status(400).json({ success: false, error: "Term, Definition, and setId are required" });
+    }
+;
+    try
+    {
+        var setObjectID = new ObjectId(setID); // Convert CardId string to ObjectId
+    } catch (error) 
+    {
+        return res.status(400).json({ success: false, error: "Invalid CardId format" });
+    }
+
+    try
+    {
+        await client.connect();
+        const db = client.db("POOSD-Large-Project"); // Replace with your database name
+
+        // Insert the new card into the Card collection
+        const newCard = 
+        {
+            Term: Term,
+            Definition: Definition,
+            SetID: setObjectID // Reference to the CardSet ObjectId
+        };
+
+        const result = await db.collection('Cards').insertOne(newCard);
+
+        // Return the newly created card details including the generated _id
+        res.status(201).json(
+        {
+            success: true,
+            card: {
+                _id: result.insertedId.toString(),
+                Term: newCard.Term,
+                Definition: newCard.Definition
+            }
+        });
+    } catch (error)
+    {
+        console.error("Error creating card:", error);
+        res.status(500).json({ success: false, error: "Failed to create card" });
+    } finally 
+    {
+        await client.close();
+    }
+});
