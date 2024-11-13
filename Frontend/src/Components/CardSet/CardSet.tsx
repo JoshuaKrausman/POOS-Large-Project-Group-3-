@@ -1,13 +1,8 @@
-<<<<<<< Updated upstream
-// import { useState, useEffect } from 'react'
+
+import { useState, useEffect } from 'react'
 import './CardSet.css'
 import arrow_icon from '../Assets/arrow.png'
-=======
-import React from "react";
-import { useState, useEffect } from "react";
-import "./CardSet.css";
-import arrow_icon from "../Assets/arrow.png";
->>>>>>> Stashed changes
+
 
 function CardSet() {
   let CardID = localStorage.getItem("card_id");
