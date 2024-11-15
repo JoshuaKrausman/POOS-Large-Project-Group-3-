@@ -500,3 +500,77 @@ app.post('/api/createCard', async (req, res) =>
         await client.close();
     }
 });
+
+//delete card
+app.post('/api/deleteCard', async (req, res) => {
+    // Extract the card ID from the request body
+    const { id } = req.body;
+
+    // Validate the input to ensure the ID is provided
+    if (!id) {
+        return res.status(400).json({ success: false, error: "Card ID is required" });
+    }
+
+    try {
+        // Connect to the database
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Convert the card ID to a MongoDB ObjectId
+        const cardObjectId = new ObjectId(id);
+
+        // Attempt to delete the card with the specified ID
+        const result = await db.collection('Cards').deleteOne({ _id: cardObjectId });
+
+        // Check if a card was actually deleted
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ success: false, error: "Card not found" });
+        }
+
+        // Return a success response if the card was deleted
+        res.status(200).json({ success: true, message: "Card deleted successfully" });
+    } catch (error) {
+        console.error("Error deleting card:", error);
+
+        // Return an error response if something goes wrong
+        res.status(500).json({ success: false, error: "Failed to delete card" });
+    }
+});
+// update card
+app.post('/api/updateCard', async (req, res) => {
+    // Extract the required fields from the request body
+    const { id, question, answer } = req.body;
+
+    // Validate input to ensure all fields are provided
+    if (!id || !question || !answer) {
+        return res.status(400).json({ success: false, error: "Card ID, question, and answer are required" });
+    }
+
+    try {
+        // Connect to the database
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Convert the card ID to a MongoDB ObjectId
+        const cardObjectId = new ObjectId(id);
+
+        // Update the card with the specified ID
+        const result = await db.collection('Cards').updateOne(
+            { _id: cardObjectId }, // Filter by card ID
+            { $set: { Term: question, Definition: answer } } // Update fields
+        );
+
+        // Check if the card was found and updated
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, error: "Card not found" });
+        }
+
+        // Return a success response if the card was updated
+        res.status(200).json({ success: true, message: "Card updated successfully" });
+    } catch (error) {
+        console.error("Error updating card:", error);
+
+        // Return an error response if something goes wrong
+        res.status(500).json({ success: false, error: "Failed to update card" });
+    }
+});
