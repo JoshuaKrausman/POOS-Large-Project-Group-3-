@@ -572,3 +572,45 @@ try {
     res.status(500).json({ success: false, error: "Failed to update card" });
 }
 });
+/********************************Email verification and recovery******************************************/
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: 'ServiceAddress@gmail.com', // Use email address of dedicated service account
+        pass: 'Replace with password', // Use service account password (or google app password) 
+    },
+});
+
+// Email verification endpoint
+app.post('/api/sendVerificationEmail', async (req, res) => {
+    const { userId, email } = req.body;
+    if (!userId || !email) {
+        return res.status(400).json({ success: false, error: "User ID and email are required" });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationLink = `http://localhost:5000/verify-email?token=${verificationToken}`;
+
+    try {
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Store the verification token in the database
+        await db.collection('User').updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { verificationToken, Verified: false } }
+        );
+
+        // Send the verification email
+        await transporter.sendMail({
+            to: email,
+            subject: 'Verify Your Email Address',
+            text: `Please verify your email by clicking the following link: ${verificationLink}`,
+        });
+
+        res.status(200).json({ success: true, message: "Verification email sent" });
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        res.status(500).json({ success: false, error: "Failed to send verification email" });
+    }
+});
