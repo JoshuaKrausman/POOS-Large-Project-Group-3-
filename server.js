@@ -254,8 +254,6 @@ app.post('/api/updateCardSet', async (req, res) =>
   } catch (error) {
       console.error("Error updating card set:", error);
       res.status(500).json({ success: false, error: "Failed to update card set" });
-  } finally {
-      await client.close();
   }
 });
 

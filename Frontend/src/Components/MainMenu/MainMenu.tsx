@@ -10,11 +10,15 @@ function MainMenu()
     const [state, setState] = useState('normal');
     const [newName, setNewName] = useState('');
     const [newTopic, setNewTopic] = useState('');
-    // const [editState, setEditState] = useState(false);
-    // const [editName, setEditName] = useState('');
-    // const [editTopic, setEditTopic] = useState('');
+    const [editState, setEditState] = useState(false);
+    const [editName, setEditName] = useState('');
+    const [editTopic, setEditTopic] = useState('');
     const [isFadingOut, setIsFadingOut] = useState(false);
     const [userSets, setUserSets] = useState<any[]>([]);  // New state to store user sets
+    const [currName, setCurrName] = useState('');
+    const [currTopic, setCurrTopic] = useState('');
+    const [currId, setCurrId] = useState('');
+    const [currIndex, setCurrIndex] = useState('');
 
     const app_name = 'cop4331-project.online'
     function buildPath(route:string) : string
@@ -99,15 +103,37 @@ function MainMenu()
     };
 
 
-    async function editCardSet(id:string, index:number)
+    async function editCardSet()
     {
-      console.log("Editing Card ID: " + id);
-      console.log("Array ID: " + index)
-      // console.log("New Name: " + editName);
-      // console.log("New Topics: " + editTopic);
-      // // setEditState(true);
-      // let obj = {id : id, Name : editName, Topic : editTopic};
-      // let js = JSON.stringify(obj);
+      console.log("Editing Card ID: " + currId);
+      console.log("New Name: " + editName);
+      console.log("New Topic: " + editTopic);
+      setEditState(true);
+      let obj = {id : currId, Name : editName, Topic : editTopic};
+      let js = JSON.stringify(obj);
+      try
+      {
+        const response = await fetch(buildPath('api/updateCardSet'), {
+          method: 'POST',
+          body: js,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        // Parse the response safely
+        const resText = await response.text();
+        if (!resText) {
+          console.error("Empty response received from the server");
+          return;
+        }
+
+        console.log("Updated")
+        setEditState(false);
+        showSets();
+      }
+      catch
+      {
+
+      }
     }
 
     async function openSet(id : string)
@@ -169,7 +195,14 @@ function MainMenu()
     } else {
         setState("adding"); 
     }
-  }
+    }
+
+    function editCardWrapper(id: string) : void 
+    {
+        setCurrId(id);
+        setEditState(true);
+
+    }
 
     function handleNewName(event:any) : void
     {
@@ -179,6 +212,16 @@ function MainMenu()
     function handleNewTopic(event:any) : void
     {
         setNewTopic(event.target.value);
+    }
+
+    function handleUpdateName(event:any) : void
+    {
+        setEditName(event.target.value);
+    }
+
+    function handleUpdateTopic(event:any) : void
+    {
+        setEditTopic(event.target.value);
     }
 
 
@@ -191,6 +234,7 @@ function MainMenu()
   return (
     <div>
         <div className="blurredBackground"></div>
+        {editState === false ?<div></div>: <div className="fullyBlurredBackground"></div>}
         <div className="addButton" onClick={addCardWrapper}>+</div>
         <div className="logoutButton" onClick={doLogout}>Log Out</div>
         <div><h1>Welcome {userObj.displayName}</h1></div>
@@ -201,6 +245,9 @@ function MainMenu()
             <input type="text" id='setTopic' placeholder="Set Topic"onChange={handleNewTopic}></input>
             <div className='makeSet'onClick={addCardSet}>Add</div>
         </div>}
+
+       
+
         <div className="listCardSets">
         {userSets.map((set, index) => (
           <div key={index} className="cardSet" onClick={() => openSet(set._id)} id={`set${index + 1}`}>
@@ -214,7 +261,9 @@ function MainMenu()
                 src={pen_icon}
                 onClick={(e) => { 
                   e.stopPropagation(); // Prevent the card set from being opened when clicking edit
-                  editCardSet(set._id, index + 1);
+                  setCurrName(set.Name);
+                  setCurrTopic(set.Topic);
+                  editCardWrapper(set._id);
                 }}
                 alt="Edit icon"
                 id="editCardButton"
@@ -232,7 +281,23 @@ function MainMenu()
           </div>
         ))}
         </div>
+        {editState === false?<div></div>:
+        
+        <div id="editMenu">
+          <div id="backButton"><img src={x_icon} alt=''onClick={() => setEditState(false)}/> </div>
+          <div className="editGroup">
+            <div id="nameHeader">Name</div>
+              <input type="text" id="editName" placeholder={currName} onChange={handleUpdateName}></input>
+          </div>
+          <div className="editGroup">
+            <div id="topicHeader">Topic</div>
+              <input type="text" id="editTopic" placeholder={currTopic} onChange={handleUpdateTopic}></input>
+            </div>
+          <div className='updateSet' onClick={editCardSet}>Update</div>
+        </div>
+      }
     </div>
+
   )
 }
 
