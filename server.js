@@ -573,8 +573,10 @@ try {
 }
 });
 /********************************Email verification and recovery******************************************/
+const nodemailer = require('nodemailer');
+
 const transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    service: 'gmail',
     auth: {
         user: 'ServiceAddress@gmail.com', // Use email address of dedicated service account
         pass: 'Replace with password', // Use service account password (or google app password) 
