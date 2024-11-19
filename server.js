@@ -3,13 +3,26 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const { ObjectId } = require('mongodb');
+const nodemailer = require('nodemailer');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+require('dotenv').config(); // Load environment variables from .env file
+const JWT_SECRET = process.env.JWT_SECRET; 
+
+const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS, 
+    },
+});
+
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const url = 'mongodb+srv://server:LargeProjectServer@cluster0.3ygv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
-const client = new MongoClient(url);
+const client = new MongoClient(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -24,7 +37,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.listen(5000); // start Node + Express server on port 5000
+app.listen(5012); // start Node + Express server on port 5000
 
 
 app.post('/api/register', async (req, res, next) =>
@@ -45,7 +58,7 @@ app.post('/api/register', async (req, res, next) =>
             return res.status(400).json({ id, Username: un, error });
         }
 
-        await client.connect();
+        if (!client.isConnected()) await client.connect();
         const db = client.db('POOSD-Large-Project');
 
         // Check if the user already exists (by email or username)
@@ -97,7 +110,7 @@ app.post('/api/login', async (req, res, next) =>
     let error = '';
     const {username, password} = req.body;
     try {
-        await client.connect();
+        if (!client.isConnected()) await client.connect();
         const db = client.db('POOSD-Large-Project');
 
         const user = await db.collection('User').find({Username: username, Password: password,}).toArray();
@@ -129,7 +142,7 @@ app.post('/api/getPublicSets', async (req, res, next) =>
   
   try 
   { 
-    await client.connect();
+    if (!client.isConnected()) await client.connect();
 
     const db = client.db("POOSD-Large-Project");
 
@@ -182,7 +195,7 @@ app.post('/api/createCardSet', async (req, res) =>
 
   try
   {
-      await client.connect();
+      if (!client.isConnected()) await client.connect();
       const db = client.db("POOSD-Large-Project"); // Replace with your database name
         
       // Create the new card set object
@@ -234,7 +247,7 @@ app.post('/api/updateCardSet', async (req, res) =>
   }
 
   try {
-      await client.connect();
+      if (!client.isConnected()) await client.connect();
       const db = client.db("POOSD-Large-Project");
       
       var ObjectId = require('mongodb').ObjectId;
@@ -274,7 +287,7 @@ app.post('/api/deleteCardSet', async (req, res) =>
   _id = new ObjectId(id);
   try 
   {
-    await client.connect();
+    if (!client.isConnected()) await client.connect();
     const db = client.db("POOSD-Large-Project"); // Replace with your database name
     
     // First, find the CardSet to get the SetID
@@ -337,35 +350,6 @@ app.delete('/api/deleteUser', async (req, res) => {
     }
 });
 
-// app.post('/api/getUserSets', async (req, res) => {
-//     const { userId } = req.body;
-//     console.log("Recieved UserID:", userId);
-
-//     const db = client.db("POOSD-Large-Project");
-
-//     if (!userId) {
-//         console.error("User ID is missing in request body.");
-//         return res.status(400).json({ success: false, message: 'User ID is required' });
-//     }
-
-//     try {
-//         const userObjectId = new ObjectId(userId);
-
-//         // Query for documents with the given UserID ObjectId
-//         const userSets = await db.collection('CardSet').find({ UserID: userObjectId }).toArray();
-
-//         if (!userSets || userSets.length === 0) {
-//             console.error("No sets found for the given UserID.");
-//             return res.status(200).json({ success: false, sets: userSets });
-//         }
-
-//         res.status(200).json({ success: true, sets: userSets });
-//     } catch (error) {
-//         console.error("Error retrieving user sets:", error);
-//         res.status(500).json({ success: false, message: 'Failed to fetch user sets' });
-//     }
-// });
-
 app.post('/api/getUserSets', async (req, res) => {
     const { userId } = req.body;
     // console.log("Received UserID:", userId);
@@ -415,7 +399,7 @@ app.post('/api/getCard', async (req, res, next) =>
 
     try 
     { 
-        await client.connect();
+        if (!client.isConnected()) await client.connect();
         const db = client.db("POOSD-Large-Project");
         var setObjectID
         var ObjectId = require('mongodb').ObjectId;
@@ -468,7 +452,7 @@ app.post('/api/createCard', async (req, res) =>
 
     try
     {
-        await client.connect();
+        if (!client.isConnected()) await client.connect();
         const db = client.db("POOSD-Large-Project"); // Replace with your database name
 
         // Insert the new card into the Card collection
@@ -510,7 +494,7 @@ if (!id) {
 
 try {
     // Connect to the database
-    await client.connect();
+    if (!client.isConnected()) await client.connect();
     const db = client.db("POOSD-Large-Project");
 
     // Convert the card ID to a MongoDB ObjectId
@@ -536,39 +520,181 @@ try {
 
 // update card
 app.post('/api/updateCard', async (req, res) => {
-// Extract the required fields from the request body
-const { id, question, answer } = req.body;
+    // Extract the required fields from the request body
+    const { id, question, answer } = req.body;
 
-// Validate input to ensure all fields are provided
-if (!id || !question || !answer) {
-    return res.status(400).json({ success: false, error: "Card ID, question, and answer are required" });
-}
-
-try {
-    // Connect to the database
-    await client.connect();
-    const db = client.db("POOSD-Large-Project");
-
-    // Convert the card ID to a MongoDB ObjectId
-    const cardObjectId = new ObjectId(id);
-
-    // Update the card with the specified ID
-    const result = await db.collection('Cards').updateOne(
-        { _id: cardObjectId }, // Filter by card ID
-        { $set: { Term: question, Definition: answer } } // Update fields
-    );
-
-    // Check if the card was found and updated
-    if (result.matchedCount === 0) {
-        return res.status(404).json({ success: false, error: "Card not found" });
+    // Validate input to ensure all fields are provided
+    if (!id || !question || !answer) {
+        return res.status(400).json({ success: false, error: "Card ID, question, and answer are required" });
     }
 
-    // Return a success response if the card was updated
-    res.status(200).json({ success: true, message: "Card updated successfully" });
-} catch (error) {
-    console.error("Error updating card:", error);
+    try {
+        // Connect to the database
+        if (!client.isConnected()) await client.connect();
+        const db = client.db("POOSD-Large-Project");
 
-    // Return an error response if something goes wrong
-    res.status(500).json({ success: false, error: "Failed to update card" });
-}
+        // Convert the card ID to a MongoDB ObjectId
+        const cardObjectId = new ObjectId(id);
+
+        // Update the card with the specified ID
+        const result = await db.collection('Cards').updateOne(
+            { _id: cardObjectId }, // Filter by card ID
+            { $set: { Term: question, Definition: answer } } // Update fields
+        );
+
+        // Check if the card was found and updated
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, error: "Card not found" });
+        }
+
+        // Return a success response if the card was updated
+        res.status(200).json({ success: true, message: "Card updated successfully" });
+    } catch (error) {
+        console.error("Error updating card:", error);
+
+        // Return an error response if something goes wrong
+        res.status(500).json({ success: false, error: "Failed to update card" });
+    }
+});
+
+/*********************************************Email verification and recovery*******************************/
+
+// Email verification endpoint
+app.post('/api/sendVerificationEmail', async (req, res) => {
+    const { userId, email } = req.body;
+    if (!userId || !email) {
+        return res.status(400).json({ success: false, error: "User ID and email are required" });
+    }
+
+    // const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
+    const verificationLink = `https://your-domain.com/verify-email?token=${verificationToken}`;
+    const verificationTokenExpiry = Date.now() + 3600000; // 1 hour
+
+
+    try {
+        if (!client.isConnected()) await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Store the verification token in the database
+        await db.collection('User').updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { verificationToken, verificationTokenExpiry, Verified: false } }
+        );
+
+        // Send the verification email
+        await transporter.sendMail({
+            to: email,
+            subject: 'Verify Your Email Address',
+            text: `Please verify your email by clicking the following link: ${verificationLink}`,
+        });
+
+        res.status(200).json({ success: true, message: "Verification email sent" });
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        res.status(500).json({ success: false, error: "Failed to send verification email" });
+    }
+});
+app.get('/verify-email', async (req, res) => {
+    const { token } = req.query; // Extract the token from the URL
+
+    if (!token) {
+        return res.status(400).json({ success: false, error: "Verification token is required" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        if (!client.isConnected()) await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Find user by token and update their status
+        const result = await db.collection('User').findOneAndUpdate(
+            { verificationToken: token, verificationTokenExpiry: { $gt: Date.now() } }, // Match by token and check expiry
+            { $set: { Verified: true }, $unset: { verificationToken: "", verificationTokenExpiry: "" } } // Mark as verified and remove token
+        );
+
+        if (!result.value) {
+            return res.status(400).json({ success: false, error: "Invalid or expired token" });
+        }
+
+        res.status(200).send("Email verified successfully!");
+    } catch (error) {
+        console.error("Error verifying email:", error);
+        res.status(500).json({ success: false, error: "Failed to verify email" });
+    }
+});
+
+
+
+// Password recovery request endpoint
+app.post('/api/sendRecoveryEmail', async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ success: false, error: "Email is required" });
+    }
+
+    const recoveryToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1h' });
+    const recoveryLink = `http://your-frontend-domain.com/recover-password?token=${recoveryToken}`;
+    const recoveryTokenExpiry = Date.now() + 3600000;
+
+    try {
+        if (!client.isConnected()) await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Store the recovery token in the database
+        const result = await db.collection('User').updateOne(
+            { Email: email },
+            { $set: { recoveryToken, recoveryTokenExpiry } }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, error: "Email not found" });
+        }
+
+        // Send the recovery email
+        await transporter.sendMail({
+            to: email,
+            subject: 'Password Recovery',
+            text: `You can reset your password by clicking the following link: ${recoveryLink}`,
+        });
+
+        res.status(200).json({ success: true, message: "Password recovery email sent" });
+    } catch (error) {
+        console.error("Error sending recovery email:", error);
+        res.status(500).json({ success: false, error: "Failed to send recovery email" });
+    }
+});
+
+// Reset password endpoint
+app.post('/api/resetPassword', async (req, res) => {
+    const { token, newPassword } = req.body;
+    if (!token || !newPassword) {
+        return res.status(400).json({ success: false, error: "Token and new password are required" });
+    }
+
+    try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const email = decoded.email;
+
+        if (!client.isConnected()) await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update user's password and remove recovery token
+        const result = await db.collection('User').findOneAndUpdate(
+            { Email: email, recoveryToken: token, recoveryTokenExpiry: { $gt: Date.now() } },
+            { $set: { Password: hashedPassword }, $unset: { recoveryToken: "", recoveryTokenExpiry: "" } }
+        );
+
+        if (!result.value) {
+            return res.status(400).json({ success: false, error: "Invalid or expired token" });
+        }
+
+        res.status(200).json({ success: true, message: "Password reset successfully" });
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        res.status(500).json({ success: false, error: "Failed to reset password" });
+    }
 });
