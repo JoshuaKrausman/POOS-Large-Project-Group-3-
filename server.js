@@ -557,7 +557,7 @@ app.post('/api/updateCard', async (req, res) => {
     }
 });
 
-/*********************************************Email verification and recovery*******************************/
+/*********************************************Email verification and recovery*****************************************/
 
 // Email verification endpoint
 app.post('/api/sendVerificationEmail', async (req, res) => {
@@ -603,7 +603,6 @@ app.get('/verify-email', async (req, res) => {
     }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
         if (!client.isConnected()) await client.connect();
         const db = client.db("POOSD-Large-Project");
 
