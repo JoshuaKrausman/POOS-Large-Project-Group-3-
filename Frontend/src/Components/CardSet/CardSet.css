@@ -91,23 +91,78 @@ input[type="text"]#cardAnswer::placeholder {
 .makeCard:hover {
   background-color: #fc90af;
 }
-.card {
+.card,
+.addCardForm {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 80vw;
   margin: 10px 0;
   font-size: 20px;
   text-align: left;
   text-shadow: 1px 2px 7px #222;
   padding: 20px;
-  max-width: 80vw;
-  cursor: pointer;
   color: white;
-  background-color: #fc90af; /* Updated to match MainMenu background color */
+  background-color: #8f61db;
   border-radius: 30px;
   transition: 0.2s;
   overflow: visible;
   height: auto;
   min-height: 60px;
+  box-sizing: border-box;
+}
+
+.card {
+  cursor: pointer;
+}
+
+.card:hover {
+  background-color: #fc90af;
+  box-shadow: 0px 0px 10px #edbbce;
+  transform: scale(1.1);
+}
+
+.addCardForm {
+  margin-bottom: 20px;
+}
+
+.addCardForm input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 30px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-size: 16px;
+  transition: 0.3s;
+  box-sizing: border-box;
+}
+
+.addCardForm input[type="text"]:focus {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.addCardForm input[type="text"]::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.makeCard {
+  align-self: flex-end;
+  padding: 10px 20px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 30px;
+  background-color: #e4b1f0;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.makeCard:hover {
+  background-color: #fc90af;
 }
 
 .card.editing {
