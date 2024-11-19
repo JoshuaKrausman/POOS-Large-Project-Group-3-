@@ -47,12 +47,13 @@ function LoginReg()
         }
         else
         {
-            var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
-            localStorage.setItem('user_data', JSON.stringify(user));
-
-
+            // var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
+            // localStorage.setItem('user_data', JSON.stringify(user));
 
             console.log("Reg Sucessful");
+            console.log("email: " + email);
+            console.log("id: " + res.id);
+            sendEmail(email, res.id)
             setState("Welcome");
         }
     }
@@ -63,6 +64,35 @@ function LoginReg()
     } 
 
   };
+
+  async function sendEmail(email:string, id:string): Promise<void>
+  {
+      let obj = {userId:id,email:email};
+      let js = JSON.stringify(obj);
+      try
+      {
+        const response = await fetch(buildPath('api/sendVerificationEmail'), {
+          method: 'POST',
+          body: js,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+          // Parse the response safely
+          const resText = await response.text();
+          if (!resText) {
+            console.error("Empty response received from the server");
+            return;
+          }
+
+          console.log("Email Sent");
+        
+      }
+      catch
+      {
+
+      }
+
+  }
 
   async function doLogin(event: any) : Promise<void>
   {
@@ -83,7 +113,7 @@ function LoginReg()
         }
         else
         {
-            var user = {username:res.Username, id:res.id, displayName:res.DisplayName, email:res.Email}
+            var user = {username:res.Username, id:res.id, displayName:res.DisplayName, email:res.Email, verified:res.Verified}
             localStorage.setItem('user_data', JSON.stringify(user));
             // Clear the input fields after successful login
             setUserame("");

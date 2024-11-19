@@ -177,7 +177,7 @@ function CardSet() {
 
   useEffect(() => {
     showCards();
-  });
+  }, []);
 
   return (
     <div className="CardSet">
@@ -232,7 +232,7 @@ function CardSet() {
                 <strong>A: </strong>
                 {card.Definition}
               </div>
-              <div className="editDelete">
+              <div className="editDelete2">
                 <img
                   src={pen_icon}
                   onClick={() => toggleEdit(card._id)}

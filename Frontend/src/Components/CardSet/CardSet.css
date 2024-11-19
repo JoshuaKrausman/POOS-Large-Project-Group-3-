@@ -104,7 +104,7 @@ input[type="text"]#cardAnswer::placeholder {
   padding: 20px;
   color: white;
   background-color: #8f61db;
-  border-radius: 30px;
+  border-radius: 60px;
   transition: 0.2s;
   overflow: visible;
   height: auto;
@@ -179,9 +179,10 @@ input[type="text"]#cardAnswer::placeholder {
   flex-grow: 1;
 }
 
-.editDelete {
+.editDelete2 {
   display: flex;
   gap: 10px;
+  top:10px;
 }
 
 .editForm {
@@ -219,13 +220,6 @@ input[type="text"]#cardAnswer::placeholder {
 
 .editButtons button:hover {
   background-color: #d39fe0;
-}
-
-#editCardButton,
-#delCardButton {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
 }
 
 .listCards {

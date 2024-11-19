@@ -7,13 +7,21 @@ const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); // Load environment variables from .env file
-const JWT_SECRET = process.env.JWT_SECRET; 
+// console.log(process.env);
+const JWT_SECRET = process.env.JWT_SECRET || "K5J9#s!z4o!7oRbt@xNxO3FdH2w6p+fKzA3b1g2LZt8FzQ1zTzK5mJ9oR8bK7Yw"; 
+const uri = process.env.MONGO_URI || "mongodb+srv://server:LargeProjectServer@cluster0.3ygv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// console.log("MongoDB Connection String:", uri);
+// console.log("Secret Key:", JWT_SECRET);
+
+
 
 const transporter = nodemailer.createTransport({
-    service: 'Gmail',
+    // service: 'Gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
     auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS, 
+        user: 'cop4331group3@gmail.com',
+        pass: 'dxjv nrzx zyub cjbh'
     },
 });
 
@@ -22,7 +30,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-const client = new MongoClient(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(uri);
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -58,7 +66,7 @@ app.post('/api/register', async (req, res, next) =>
             return res.status(400).json({ id, Username: un, error });
         }
 
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db('POOSD-Large-Project');
 
         // Check if the user already exists (by email or username)
@@ -107,10 +115,11 @@ app.post('/api/login', async (req, res, next) =>
     let un = '';
     let dn = '';
     let em = '';
+    let ver = '';
     let error = '';
     const {username, password} = req.body;
     try {
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db('POOSD-Large-Project');
 
         const user = await db.collection('User').find({Username: username, Password: password,}).toArray();
@@ -119,7 +128,8 @@ app.post('/api/login', async (req, res, next) =>
             un = user[0].Username;
             dn = user[0].DisplayName;
             em = user[0].Email;
-            res.status(200).json({ id : id, Username: un, DisplayName : dn, Email : em, error: '' });
+            ver = user[0].Verified;
+            res.status(200).json({ id : id, Username: un, DisplayName : dn, Email : em, Verified : ver, error: '' });
         } else {
             error = 'Invalid username or password';
             res.status(400).json({ id: id, Username: un, DisplayName : dn, Email : em, error });
@@ -142,7 +152,7 @@ app.post('/api/getPublicSets', async (req, res, next) =>
   
   try 
   { 
-    if (!client.isConnected()) await client.connect();
+     await client.connect();
 
     const db = client.db("POOSD-Large-Project");
 
@@ -195,7 +205,7 @@ app.post('/api/createCardSet', async (req, res) =>
 
   try
   {
-      if (!client.isConnected()) await client.connect();
+      await client.connect();
       const db = client.db("POOSD-Large-Project"); // Replace with your database name
         
       // Create the new card set object
@@ -247,7 +257,7 @@ app.post('/api/updateCardSet', async (req, res) =>
   }
 
   try {
-      if (!client.isConnected()) await client.connect();
+      await client.connect();
       const db = client.db("POOSD-Large-Project");
       
       var ObjectId = require('mongodb').ObjectId;
@@ -287,7 +297,7 @@ app.post('/api/deleteCardSet', async (req, res) =>
   _id = new ObjectId(id);
   try 
   {
-    if (!client.isConnected()) await client.connect();
+     await client.connect();
     const db = client.db("POOSD-Large-Project"); // Replace with your database name
     
     // First, find the CardSet to get the SetID
@@ -399,7 +409,7 @@ app.post('/api/getCard', async (req, res, next) =>
 
     try 
     { 
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
         var setObjectID
         var ObjectId = require('mongodb').ObjectId;
@@ -452,7 +462,7 @@ app.post('/api/createCard', async (req, res) =>
 
     try
     {
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project"); // Replace with your database name
 
         // Insert the new card into the Card collection
@@ -494,7 +504,7 @@ if (!id) {
 
 try {
     // Connect to the database
-    if (!client.isConnected()) await client.connect();
+    await client.connect();
     const db = client.db("POOSD-Large-Project");
 
     // Convert the card ID to a MongoDB ObjectId
@@ -568,19 +578,26 @@ app.post('/api/sendVerificationEmail', async (req, res) => {
 
     // const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
-    const verificationLink = `https://your-domain.com/verify-email?token=${verificationToken}`;
+    console.log("Generated Token: ", verificationToken);
+    const baseUrl = process.env.NODE_ENV === 'development'
+    ? 'https://cop4331-project.online' 
+    : 'http://localhost:5000'; 
+
+    const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
     const verificationTokenExpiry = Date.now() + 3600000; // 1 hour
 
 
     try {
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
 
         // Store the verification token in the database
-        await db.collection('User').updateOne(
+        const updateResult = await db.collection('User').updateOne(
             { _id: new ObjectId(userId) },
             { $set: { verificationToken, verificationTokenExpiry, Verified: false } }
         );
+
+        console.log("Databse Update: ", updateResult)
 
         // Send the verification email
         await transporter.sendMail({
@@ -595,26 +612,45 @@ app.post('/api/sendVerificationEmail', async (req, res) => {
         res.status(500).json({ success: false, error: "Failed to send verification email" });
     }
 });
+
 app.get('/verify-email', async (req, res) => {
-    const { token } = req.query; // Extract the token from the URL
+    const { token } = req.query;
 
     if (!token) {
         return res.status(400).json({ success: false, error: "Verification token is required" });
     }
 
     try {
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
 
-        // Find user by token and update their status
-        const result = await db.collection('User').findOneAndUpdate(
-            { verificationToken: token, verificationTokenExpiry: { $gt: Date.now() } }, // Match by token and check expiry
-            { $set: { Verified: true }, $unset: { verificationToken: "", verificationTokenExpiry: "" } } // Mark as verified and remove token
-        );
+        // Check if the user is already verified
+        const user = await db.collection('User').findOne({
+            verificationToken: token,
+            verificationTokenExpiry: { $gt: Date.now() },
+        });
 
-        if (!result.value) {
+        if (!user) {
+            const alreadyVerifiedUser = await db.collection('User').findOne({
+                Verified: true,
+                verificationToken: { $exists: false },
+            });
+
+            if (alreadyVerifiedUser) {
+                return res.status(200).send("Email is already verified!");
+            }
+
             return res.status(400).json({ success: false, error: "Invalid or expired token" });
         }
+
+        // Mark the user as verified
+        await db.collection('User').updateOne(
+            { _id: user._id },
+            {
+                $set: { Verified: true },
+                $unset: { verificationToken: "", verificationTokenExpiry: "" },
+            }
+        );
 
         res.status(200).send("Email verified successfully!");
     } catch (error) {
@@ -622,6 +658,9 @@ app.get('/verify-email', async (req, res) => {
         res.status(500).json({ success: false, error: "Failed to verify email" });
     }
 });
+
+
+
 
 
 
@@ -637,7 +676,7 @@ app.post('/api/sendRecoveryEmail', async (req, res) => {
     const recoveryTokenExpiry = Date.now() + 3600000;
 
     try {
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
 
         // Store the recovery token in the database
@@ -675,7 +714,7 @@ app.post('/api/resetPassword', async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         const email = decoded.email;
 
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
 
         // Hash the new password
@@ -695,5 +734,32 @@ app.post('/api/resetPassword', async (req, res) => {
     } catch (error) {
         console.error("Error resetting password:", error);
         res.status(500).json({ success: false, error: "Failed to reset password" });
+    }
+});
+
+
+app.post('/api/checkVerificationStatus', async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ success: false, error: "User ID is required" });
+    }
+
+    try {
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Find the user by their userId
+        const user = await db.collection('User').findOne({ _id: new ObjectId(userId) });
+
+        if (!user) {
+            return res.status(404).json({ success: false, error: "User not found" });
+        }
+
+        // Return the verification status
+        res.status(200).json({ success: true, verified: user.Verified });
+    } catch (error) {
+        console.error("Error checking verification status:", error);
+        res.status(500).json({ success: false, error: "Failed to check verification status" });
     }
 });

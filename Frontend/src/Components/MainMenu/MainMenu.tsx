@@ -6,8 +6,10 @@ import pen_icon from '../Assets/edit.png'
 function MainMenu()
 {
     let userJSON = localStorage.getItem('user_data')
+    console.log(userJSON)
     let userObj = JSON.parse(userJSON!);
     const [state, setState] = useState('normal');
+    const [verified, setVerified] = useState(false)
     const [newName, setNewName] = useState('');
     const [newTopic, setNewTopic] = useState('');
     const [editState, setEditState] = useState(false);
@@ -18,7 +20,7 @@ function MainMenu()
     const [currName, setCurrName] = useState('');
     const [currTopic, setCurrTopic] = useState('');
     const [currId, setCurrId] = useState('');
-    const [currIndex, setCurrIndex] = useState('');
+    // const [currIndex, setCurrIndex] = useState('');
 
     const app_name = 'cop4331-project.online'
     function buildPath(route:string) : string
@@ -32,6 +34,43 @@ function MainMenu()
             return 'http://localhost:5000/' + route;
         }
     }
+
+    async function checkVerification(): Promise<void>
+    {
+      let obj = {userId: userObj.id};
+      let js = JSON.stringify(obj);
+      try
+      {
+
+        const response = await fetch(buildPath('api/checkVerificationStatus'), {
+          method: 'POST',
+          body: js,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      console.log(userObj.verified);
+
+      const resText = await response.text();
+      let res = JSON.parse(resText);
+      console.log(res.verified);
+
+
+      if(!res.verified) 
+        {
+          setVerified(false);
+          console.log('not verified');
+        }
+        else
+        {
+          setVerified(true);
+          console.log("is verified");
+        }
+      }
+      catch
+      {
+
+      }
+    }
+
     async function showSets(): Promise<void> {
         // Check if userObj is valid
         if (!userObj || !userObj.id) {
@@ -143,8 +182,6 @@ function MainMenu()
       window.location.href = '/card'
     }
 
-
-
     function doLogout(event:any) : void
     {
 	    event.preventDefault();
@@ -227,6 +264,7 @@ function MainMenu()
 
 
     useEffect(() => {
+      checkVerification();
       // Call showSets once when the component mounts
       showSets();
     }, []);
@@ -234,6 +272,7 @@ function MainMenu()
   return (
     <div>
         <div className="blurredBackground"></div>
+        {verified === true ? <div></div> : <div id='verifyWarning'>Check Your Email To Verify Account!</div>}
         {editState === false ?<div></div>: <div className="fullyBlurredBackground"></div>}
         <div className="addButton" onClick={addCardWrapper}>+</div>
         <div className="logoutButton" onClick={doLogout}>Log Out</div>
