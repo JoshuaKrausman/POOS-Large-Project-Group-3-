@@ -4,7 +4,7 @@ const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const { ObjectId } = require('mongodb');
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); // Load environment variables from .env file
 // console.log(process.env);
@@ -718,12 +718,12 @@ app.post('/api/resetPassword', async (req, res) => {
         const db = client.db("POOSD-Large-Project");
 
         // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        // const hashedPassword = await bcrypt.hash(newPassword, 10);
 
         // Update user's password and remove recovery token
         const result = await db.collection('User').findOneAndUpdate(
             { Email: email, recoveryToken: token, recoveryTokenExpiry: { $gt: Date.now() } },
-            { $set: { Password: hashedPassword }, $unset: { recoveryToken: "", recoveryTokenExpiry: "" } }
+            { $set: { Password: newPassword }, $unset: { recoveryToken: "", recoveryTokenExpiry: "" } }
         );
 
         if (!result.value) {
