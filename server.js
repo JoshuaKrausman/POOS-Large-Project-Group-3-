@@ -4,14 +4,10 @@ const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const { ObjectId } = require('mongodb');
 const nodemailer = require('nodemailer');
-// const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); // Load environment variables from .env file
-// console.log(process.env);
 const JWT_SECRET = process.env.JWT_SECRET || "K5J9#s!z4o!7oRbt@xNxO3FdH2w6p+fKzA3b1g2LZt8FzQ1zTzK5mJ9oR8bK7Yw"; 
 const uri = process.env.MONGO_URI || "mongodb+srv://server:LargeProjectServer@cluster0.3ygv0.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-// console.log("MongoDB Connection String:", uri);
-// console.log("Secret Key:", JWT_SECRET);
 
 
 
@@ -277,8 +273,6 @@ app.post('/api/updateCardSet', async (req, res) =>
   } catch (error) {
       console.error("Error updating card set:", error);
       res.status(500).json({ success: false, error: "Failed to update card set" });
-  } finally {
-      await client.close();
   }
 });
 
@@ -362,7 +356,6 @@ app.delete('/api/deleteUser', async (req, res) => {
 
 app.post('/api/getUserSets', async (req, res) => {
     const { userId } = req.body;
-    // console.log("Received UserID:", userId);
   
     if (!userId) {
       console.error("User ID is missing in request body.");
@@ -532,6 +525,7 @@ try {
 app.post('/api/updateCard', async (req, res) => {
     // Extract the required fields from the request body
     const { id, question, answer } = req.body;
+    // console.log(req.body);
 
     // Validate input to ensure all fields are provided
     if (!id || !question || !answer) {
@@ -540,7 +534,7 @@ app.post('/api/updateCard', async (req, res) => {
 
     try {
         // Connect to the database
-        if (!client.isConnected()) await client.connect();
+        await client.connect();
         const db = client.db("POOSD-Large-Project");
 
         // Convert the card ID to a MongoDB ObjectId
@@ -578,10 +572,13 @@ app.post('/api/sendVerificationEmail', async (req, res) => {
 
     // const verificationToken = crypto.randomBytes(32).toString('hex');
     const verificationToken = jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1h' });
-    console.log("Generated Token: ", verificationToken);
-    const baseUrl = process.env.NODE_ENV === 'development'
-    ? 'https://cop4331-project.online' 
-    : 'http://localhost:5000'; 
+    // const baseUrl = process.env.NODE_ENV === 'development'
+    // ? 'https://cop4331-project.online' 
+    // : 'http://localhost:5000'; 
+
+    const baseUrl = "http://cop4331-project.online:5000";
+    // const baseUrl = "http://localhost:5173"
+    // const baseUrl = "http://localhost:5000";
 
     const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
     const verificationTokenExpiry = Date.now() + 3600000; // 1 hour
@@ -596,8 +593,6 @@ app.post('/api/sendVerificationEmail', async (req, res) => {
             { _id: new ObjectId(userId) },
             { $set: { verificationToken, verificationTokenExpiry, Verified: false } }
         );
-
-        console.log("Databse Update: ", updateResult)
 
         // Send the verification email
         await transporter.sendMail({
@@ -615,6 +610,7 @@ app.post('/api/sendVerificationEmail', async (req, res) => {
 
 app.get('/verify-email', async (req, res) => {
     const { token } = req.query;
+    // console.log("This is a token: " + req.query.token);
 
     if (!token) {
         return res.status(400).json({ success: false, error: "Verification token is required" });
@@ -627,24 +623,15 @@ app.get('/verify-email', async (req, res) => {
         // Check if the user is already verified
         const user = await db.collection('User').findOne({
             verificationToken: token,
-            verificationTokenExpiry: { $gt: Date.now() },
+            verificationTokenExpiry: { $gt: Date.now() }, // Check token expiry
         });
 
         if (!user) {
-            const alreadyVerifiedUser = await db.collection('User').findOne({
-                Verified: true,
-                verificationToken: { $exists: false },
-            });
-
-            if (alreadyVerifiedUser) {
-                return res.status(200).send("Email is already verified!");
-            }
-
             return res.status(400).json({ success: false, error: "Invalid or expired token" });
         }
 
         // Mark the user as verified
-        await db.collection('User').updateOne(
+        const updateResult = await db.collection('User').updateOne(
             { _id: user._id },
             {
                 $set: { Verified: true },
@@ -652,14 +639,17 @@ app.get('/verify-email', async (req, res) => {
             }
         );
 
-        res.status(200).send("Email verified successfully!");
+        if (updateResult.modifiedCount === 0) {
+            return res.status(500).json({ success: false, error: "Failed to update user verification status" });
+        }
+
+        // Respond with JSON to match the front-end expectations
+        res.status(200).json({ success: true });
     } catch (error) {
         console.error("Error verifying email:", error);
         res.status(500).json({ success: false, error: "Failed to verify email" });
     }
 });
-
-
 
 
 
@@ -672,7 +662,10 @@ app.post('/api/sendRecoveryEmail', async (req, res) => {
     }
 
     const recoveryToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1h' });
-    const recoveryLink = `http://your-frontend-domain.com/recover-password?token=${recoveryToken}`;
+    // : 'http://localhost:5173';
+
+    const baseUrl = "http://cop4331-project.online"
+    const recoveryLink = `${baseUrl}/recover-password?token=${recoveryToken}`;
     const recoveryTokenExpiry = Date.now() + 3600000;
 
     try {
@@ -703,9 +696,54 @@ app.post('/api/sendRecoveryEmail', async (req, res) => {
     }
 });
 
+
+app.get('/api/recover-password', async (req, res) => {
+    const { token } = req.query; // Token from query parameters
+
+    if (!token) {
+        return res.status(400).json({ success: false, error: "Recovery token is required" });
+    }
+
+    try {
+        // Verify the token
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const email = decoded.email;
+
+        await client.connect();
+        const db = client.db("POOSD-Large-Project");
+
+        // Check if token exists and is not expired
+        const user = await db.collection('User').findOne({
+            Email: email,
+            recoveryToken: token,
+            recoveryTokenExpiry: { $gt: Date.now() },
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: "Invalid or expired recovery token" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Recovery token is valid",
+            email, // Optionally include the user's email for client-side convenience
+        });
+    } catch (error) {
+        console.error("Error validating recovery token:", error);
+
+        // Distinguish between invalid and expired tokens
+        if (error.name === 'TokenExpiredError') {
+            return res.status(400).json({ success: false, error: "Recovery token has expired" });
+        }
+
+        res.status(400).json({ success: false, error: "Invalid recovery token" });
+    }
+});
+
 // Reset password endpoint
 app.post('/api/resetPassword', async (req, res) => {
     const { token, newPassword } = req.body;
+
     if (!token || !newPassword) {
         return res.status(400).json({ success: false, error: "Token and new password are required" });
     }
@@ -714,28 +752,55 @@ app.post('/api/resetPassword', async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         const email = decoded.email;
 
+
         await client.connect();
         const db = client.db("POOSD-Large-Project");
 
-        // Hash the new password
-        // const hashedPassword = await bcrypt.hash(newPassword, 10);
+        // Check the user's recovery token and expiry in the database
+        const user = await db.collection('User').findOne({
+            Email: email,
+            recoveryToken: token, 
+            recoveryTokenExpiry: { $gt: Date.now() }, 
+        });
 
-        // Update user's password and remove recovery token
-        const result = await db.collection('User').findOneAndUpdate(
-            { Email: email, recoveryToken: token, recoveryTokenExpiry: { $gt: Date.now() } },
-            { $set: { Password: newPassword }, $unset: { recoveryToken: "", recoveryTokenExpiry: "" } }
-        );
 
-        if (!result.value) {
+        if (!user) {
+            console.error("No matching user or expired token:", { email, token });
             return res.status(400).json({ success: false, error: "Invalid or expired token" });
         }
 
+        const result = await db.collection('User').findOneAndUpdate(
+            { Email: email, recoveryToken: token, recoveryTokenExpiry: { $gt: Date.now() } },
+            { 
+                $set: { Password: newPassword }, 
+                $unset: { recoveryToken: "", recoveryTokenExpiry: "" } 
+            },
+            { returnDocument: 'after' } 
+        );
+
+
+        // Check if password update was successful
+        if (result && result.value && result.value.Password !== newPassword) {
+            console.error("Password did not update properly:", { email, token });
+            return res.status(400).json({ success: false, error: "Failed to reset password" });
+        }
+
+        // If update is successful, return success
         res.status(200).json({ success: true, message: "Password reset successfully" });
     } catch (error) {
         console.error("Error resetting password:", error);
+
+        if (error.name === 'TokenExpiredError') {
+            return res.status(400).json({ success: false, error: "Recovery token has expired" });
+        }
+
         res.status(500).json({ success: false, error: "Failed to reset password" });
     }
 });
+
+
+
+
 
 
 app.post('/api/checkVerificationStatus', async (req, res) => {

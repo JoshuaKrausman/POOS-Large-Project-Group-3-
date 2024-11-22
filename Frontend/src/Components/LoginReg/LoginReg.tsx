@@ -27,10 +27,6 @@ function LoginReg()
   async function doRegister(event: any) : Promise<void>
   {
     event.preventDefault();
-    console.log("username:" + username);
-    console.log("password:" + password);
-    console.log("email:" + email);
-    console.log("displayName:" + displayName);
     var obj = {username:username,password:password,displayName:displayName,email:email};
     var js = JSON.stringify(obj);
 
@@ -47,12 +43,7 @@ function LoginReg()
         }
         else
         {
-            // var user = {firstName:res.firstName,lastName:res.lastName,id:res.id}
-            // localStorage.setItem('user_data', JSON.stringify(user));
 
-            console.log("Reg Sucessful");
-            console.log("email: " + email);
-            console.log("id: " + res.id);
             sendEmail(email, res.id)
             setState("Welcome");
         }
@@ -131,6 +122,11 @@ function LoginReg()
     
   };
 
+  function forgotPasswordRoute() : void
+  {
+    window.location.href = '/email-recovery'
+  }
+
   function handleSetRegDisplayName( e: any ) : void
   {
     setDisplayName( e.target.value );
@@ -167,7 +163,7 @@ function LoginReg()
         </div>
       </div>
       {state === "Register"?<div></div>:<div className="forgotxLorR">
-        <div className="forgotPassword">Forgot Your Password?</div>
+        <div className="forgotPassword" onClick={forgotPasswordRoute}>Forgot Your Password?</div>
         <div className="LorR" onClick={() => setState("Register")}>New User?</div>
       </div>}
 

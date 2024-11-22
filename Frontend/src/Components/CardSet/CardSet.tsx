@@ -17,9 +17,9 @@ function CardSet() {
   );
   const [editQuestion, setEditQuestion] = useState("");
   const [editAnswer, setEditAnswer] = useState("");
-  const [isFadingOut, setIsFadingOut] = useState(false);
+  // const [isFadingOut, setIsFadingOut] = useState(false);
 
-  const cardSetId = localStorage.getItem("card_set_id");
+  // const cardSetId = localStorage.getItem("card_set_id");
 
   const app_name = "cop4331-project.online";
   function buildPath(route: string): string {
@@ -102,9 +102,9 @@ function CardSet() {
   }
 
   async function editCard(id: string) {
-    console.log("Editing Card ID: " + id);
-    console.log("New Question: " + editQuestion);
-    console.log("New Answer: " + editAnswer);
+    // console.log("Editing Card ID: " + id);
+    // console.log("New Question: " + editQuestion);
+    // console.log("New Answer: " + editAnswer);
     let obj = { id: id, question: editQuestion, answer: editAnswer };
     let js = JSON.stringify(obj);
     try {
@@ -116,7 +116,7 @@ function CardSet() {
 
       const resText = await response.text();
       if (!resText) {
-        console.error("Empty response received from the sever");
+        console.error("Empty response received from the server");
         return;
       }
       console.log("Card updated");
@@ -157,10 +157,10 @@ function CardSet() {
 
   function addCardWrapper(): void {
     if (state === "adding") {
-      setIsFadingOut(true);
+      // setIsFadingOut(true);
       setTimeout(() => {
         setState("normal");
-        setIsFadingOut(false);
+        // setIsFadingOut(false);
       }, 150);
     } else {
       setState("adding");
