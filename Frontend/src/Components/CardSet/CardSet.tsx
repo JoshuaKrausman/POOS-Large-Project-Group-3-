@@ -71,6 +71,8 @@ function CardSet() {
   }
 
   async function deleteCard(id: string) {
+    let text = "Are you sure you want to delete?";
+    if (confirm(text) == true) {
     let obj = { id: id };
     let js = JSON.stringify(obj);
     try {
@@ -91,6 +93,7 @@ function CardSet() {
       alert(error.toString());
     }
   }
+  }
 
   function toggleEdit(cardId: string) {
     setEditingCards((prev) => ({
@@ -102,9 +105,7 @@ function CardSet() {
   }
 
   async function editCard(id: string) {
-    // console.log("Editing Card ID: " + id);
-    // console.log("New Question: " + editQuestion);
-    // console.log("New Answer: " + editAnswer);
+
     let obj = { id: id, question: editQuestion, answer: editAnswer };
     let js = JSON.stringify(obj);
     try {

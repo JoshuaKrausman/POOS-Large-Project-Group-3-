@@ -117,6 +117,8 @@ function MainMenu()
 
     async function deleteCardSet(id: string) 
     {
+      let text = "Are you sure you want to delete?";
+      if (confirm(text) == true) {
       let obj = {id : id};
       let js = JSON.stringify(obj);
       try
@@ -139,6 +141,7 @@ function MainMenu()
         {
           alert(error.toString());
         }
+      }
     };
 
 
