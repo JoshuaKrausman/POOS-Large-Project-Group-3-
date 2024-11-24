@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import "./Study.css";
 import arrow_icon from "../Assets/arrow.png";
 

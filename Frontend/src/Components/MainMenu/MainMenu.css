@@ -118,7 +118,7 @@ h1, h2
     box-shadow: 0px 0px 8px black;
 }
 
-.addButton 
+.addButton
 {
     align-items: center;        
     justify-content: center;    
@@ -129,7 +129,7 @@ h1, h2
     border-radius: 40px;
     width: 60px;
     height: 40px;      
-    line-height: 30px;         
+    line-height: 50px;         
     cursor: pointer;
     position: fixed; 
     margin: 20px;
