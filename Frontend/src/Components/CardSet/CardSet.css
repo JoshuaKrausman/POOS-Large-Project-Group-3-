@@ -1,96 +1,91 @@
-#backMenu {
+.topButtons {
   position: fixed;
-  left: 0;
-  background-color: #e4b1f0;
-  border-radius: 40px;
-  height: 70px;
-  margin: 20px;
   top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  z-index: 1000;
+}
+
+.circleButton {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 24px;
+  transition: 0.2s;
+  background-color: #e4b1f0;
+  color: white;
+}
+
+.circleButton:hover {
+  background-color: #fc90af;
+  transform: scale(1.1);
+}
+
+#backMenu {
+  width: 60px;
+  height: 60px;
+  margin: 0;
+  background-color: #e4b1f0;
+  border-radius: 50%;
+  padding: 10px;
   cursor: pointer;
   transition: 0.2s;
 }
 
 #backMenu:hover {
   background-color: #fc90af;
-  filter: drop-shadow(0px 0px 5px #edbbce);
   transform: scale(1.1);
 }
-
-.blurredBackground {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  backdrop-filter: blur(10px);
-  z-index: -1;
+.studyButton {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
-h1 {
-  margin-top: 60px;
+.studyButton:hover {
+  transform: translateX(-50%) scale(1.1);
+}
+.studyButton img {
+  width: 50%;
+  height: 50%;
+  object-fit: contain;
 }
 
-h1,
-h2 {
+.addButton {
+  background-color: #e4b1f0;
   color: white;
+  font-size: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.addButton:hover {
+  background-color: #fc90af;
 }
 
 .listCards {
+  margin-top: 120px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 15px;
   padding: 15px;
 }
 
-/* New styles for input fields */
-.card input[type="text"],
-.editForm input[type="text"],
-input[type="text"]#cardQuestion,
-input[type="text"]#cardAnswer {
-  width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 30px;
-  background-color: rgba(255, 255, 255, 0.2);
+h1 {
+  margin-top: 120px;
   color: white;
-  font-size: 16px;
-  transition: 0.3s;
 }
 
-.card input[type="text"]:focus,
-.editForm input[type="text"]:focus,
-input[type="text"]#cardQuestion:focus,
-input[type="text"]#cardAnswer:focus {
-  outline: none;
-  background-color: rgba(255, 255, 255, 0.3);
-}
-
-.card input[type="text"]::placeholder,
-.editForm input[type="text"]::placeholder,
-input[type="text"]#cardQuestion::placeholder,
-input[type="text"]#cardAnswer::placeholder {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Style for buttons */
-.editForm button,
-.makeCard {
-  padding: 10px 20px;
-  margin: 10px 0;
-  border: none;
-  border-radius: 30px;
-  background-color: #e4b1f0;
-  color: white;
-  font-size: 16px;
-  cursor: pointer;
-  transition: 0.3s;
-}
-
-.editForm button:hover,
-.makeCard:hover {
-  background-color: #fc90af;
-}
+/* Restored and updated card styles */
 .card,
 .addCardForm {
   display: flex;
@@ -119,7 +114,7 @@ input[type="text"]#cardAnswer::placeholder {
 .card:hover {
   background-color: #fc90af;
   box-shadow: 0px 0px 10px #edbbce;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .addCardForm {
@@ -164,7 +159,25 @@ input[type="text"]#cardAnswer::placeholder {
 .makeCard:hover {
   background-color: #fc90af;
 }
+.editForm button,
+.makeCard {
+  padding: 10px 20px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 30px;
+  background-color: #e4b1f0;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
 
+.editForm button:hover,
+.makeCard:hover {
+  background-color: #fc90af;
+}
+
+/* Additional styles for edit functionality */
 .card.editing {
   height: auto;
 }
@@ -182,7 +195,6 @@ input[type="text"]#cardAnswer::placeholder {
 .editDelete2 {
   display: flex;
   gap: 10px;
-  top:10px;
 }
 
 .editForm {
@@ -220,11 +232,4 @@ input[type="text"]#cardAnswer::placeholder {
 
 .editButtons button:hover {
   background-color: #d39fe0;
-}
-
-.listCards {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  padding: 15px;
 }
