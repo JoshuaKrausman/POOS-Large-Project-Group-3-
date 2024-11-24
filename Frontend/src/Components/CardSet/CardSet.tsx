@@ -3,6 +3,7 @@ import "./CardSet.css";
 import arrow_icon from "../Assets/arrow.png";
 import pen_icon from "../Assets/edit.png";
 import x_icon from "../Assets/x.png";
+import study_icon from "../Assets/study.png";
 
 function CardSet() {
   let CardID = localStorage.getItem("card_id");
@@ -17,8 +18,8 @@ function CardSet() {
   );
   const [editQuestion, setEditQuestion] = useState("");
   const [editAnswer, setEditAnswer] = useState("");
-  // const [isFadingOut, setIsFadingOut] = useState(false);
 
+  // const [isFadingOut, setIsFadingOut] = useState(false);
   // const cardSetId = localStorage.getItem("card_set_id");
 
   const app_name = "cop4331-project.online";
@@ -32,6 +33,12 @@ function CardSet() {
 
   function backToMenu() {
     window.location.href = "/menu";
+  }
+
+  async function studySet() {
+    console.log("Opening Set: " + CardID);
+    localStorage.setItem("card_id", CardID as string);
+    window.location.href = "/study";
   }
 
   async function showCards(): Promise<void> {
@@ -183,12 +190,23 @@ function CardSet() {
   return (
     <div className="CardSet">
       <div className="blurredBackground"></div>
-      <div>
-        <img src={arrow_icon} id="backMenu" onClick={backToMenu} />
+      <div className="topButtons">
+        <img
+          src={arrow_icon}
+          id="backMenu"
+          onClick={backToMenu}
+          alt="Back to menu"
+        />
+        <div className="rightButtons">
+          <div className="circleButton addButton" onClick={addCardWrapper}>
+            +
+          </div>
+          <div className="circleButton studyButton" onClick={studySet}>
+            <img src={study_icon} alt="Study icon" />
+          </div>
+        </div>
       </div>
-      <div className="addButton" onClick={addCardWrapper}>
-        +
-      </div>
+
       <div>
         <h1>Card Set</h1>
       </div>
